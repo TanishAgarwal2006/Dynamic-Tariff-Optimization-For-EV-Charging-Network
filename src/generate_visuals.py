@@ -121,9 +121,50 @@ def plot_queue_mitigation(df, output_dir):
     plt.close()
     print(f"-> Saved: {save_path}")
 
+def plot_actual_vs_predicted_demand(df, output_dir):
+    """Generates the Actual vs Predicted Scatter Plot for Agent 1 (Volume)."""
+    print("Rendering Actual vs Predicted Demand chart...")
+    
+    # 1. Grab the predictions that were ALREADY calculated by Agent 1
+    y_pred = df['pred_vol'].values
+    
+    # 2. Grab the actual ground-truth volume from the raw dataset
+    raw_df = pd.read_csv("data/processed/urbanev_features.csv")
+    raw_df['timestamp'] = pd.to_datetime(raw_df['timestamp'])
+    test_actuals = raw_df[raw_df['timestamp'] >= '2023-02-01']['volume'].values
+    
+    # 3. Render the Plot
+    sns.set_theme(style="whitegrid", context="talk")
+    fig, ax = plt.subplots(figsize=(10, 8), dpi=300)
+
+    # Plot the scatter of predictions vs actuals
+    ax.scatter(test_actuals, y_pred, alpha=0.4, color='#2980b9', edgecolors='none', s=25, label='Predicted Instances')
+
+    # Plot the "Perfect Prediction" ideal diagonal line (y = x)
+    max_val = max(test_actuals.max(), y_pred.max())
+    ax.plot([0, max_val], [0, max_val], color='#e74c3c', linestyle='--', linewidth=2.5, label='Perfect Prediction (y=x)')
+
+    # Formatting
+    ax.set_title('CatBoost Performance: Actual vs. Predicted Volume', fontsize=16, fontweight='bold', pad=15)
+    ax.set_xlabel('Actual Charging Volume (kWh)', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Predicted Charging Volume (kWh)', fontsize=14, fontweight='bold')
+    ax.legend(loc='upper left', frameon=True, shadow=True)
+
+    plt.tight_layout()
+    save_path = os.path.join(output_dir, 'actual_vs_predicted_demand.png')
+    plt.savefig(save_path)
+    plt.close()
+    print(f"-> Saved: {save_path}")
+     
 if __name__ == "__main__":
     out_dir = setup_directories()
     results_df = generate_month_6_data()
-    plot_revenue_curve(results_df, out_dir)
-    plot_queue_mitigation(results_df, out_dir)
+    
+    # # Your existing plots
+    # plot_revenue_curve(results_df, out_dir)
+    # plot_queue_mitigation(results_df, out_dir)
+    
+    # The new demand plot
+    plot_actual_vs_predicted_demand(results_df, out_dir)
+    
     print("\nAll presentation visuals generated successfully.")
